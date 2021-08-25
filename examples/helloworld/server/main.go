@@ -2,10 +2,11 @@ package main
 
 import (
 	"net"
-	"net/rpc"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/renevo/rpc"
 )
 
 func main() {
