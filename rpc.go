@@ -18,5 +18,6 @@ type Response struct {
 	ID            string    // echoes that of the request
 	Header        Header    // Response Headers
 	Error         string    // error, if any.
+	callErr       error     // error that won't get sent across the wire
 	next          *Response // for free list in Server
 }

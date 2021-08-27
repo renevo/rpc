@@ -19,11 +19,12 @@ import (
 var invalidRequest = struct{}{}
 
 type Server struct {
-	serviceMap sync.Map
-	reqLock    sync.Mutex // protects freeReq
-	freeReq    *Request
-	respLock   sync.Mutex // protects freeResp
-	freeResp   *Response
+	serviceMap  sync.Map
+	reqLock     sync.Mutex // protects freeReq
+	freeReq     *Request
+	respLock    sync.Mutex // protects freeResp
+	freeResp    *Response
+	middlewares []middleware
 }
 
 // NewServer returns a new Server.
@@ -96,8 +97,6 @@ func (server *Server) ServeCodec(ctx context.Context, codec ServerCodec) {
 	for {
 		service, mtype, req, argv, replyv, keepReading, err := server.readRequest(codec)
 
-		// TODO: Server Middleware
-
 		if err != nil {
 			if debugLog && err != io.EOF {
 				log.Println("rpc:", err)
@@ -107,7 +106,9 @@ func (server *Server) ServeCodec(ctx context.Context, codec ServerCodec) {
 			}
 			// send a response if we actually managed to read a header.
 			if req != nil {
-				server.sendResponse(sending, req, invalidRequest, codec, err.Error())
+				resp := server.getResponse(req)
+				resp.callErr = err
+				server.sendResponse(sending, resp, invalidRequest, codec)
 				server.freeRequest(req)
 			}
 			continue
@@ -128,8 +129,6 @@ func (server *Server) ServeRequest(ctx context.Context, codec ServerCodec) error
 	sending := new(sync.Mutex)
 	service, mtype, req, argv, replyv, keepReading, err := server.readRequest(codec)
 
-	// TODO: Server Middleware
-
 	if err != nil {
 		if !keepReading {
 			return err
@@ -137,7 +136,9 @@ func (server *Server) ServeRequest(ctx context.Context, codec ServerCodec) error
 
 		// send a response if we actually managed to read a header.
 		if req != nil {
-			server.sendResponse(sending, req, invalidRequest, codec, err.Error())
+			resp := server.getResponse(req)
+			resp.callErr = err
+			server.sendResponse(sending, resp, invalidRequest, codec)
 			server.freeRequest(req)
 		}
 		return err
@@ -226,15 +227,12 @@ func (server *Server) readRequest(codec ServerCodec) (service *service, mtype *m
 	return
 }
 
-func (server *Server) sendResponse(sending *sync.Mutex, req *Request, reply interface{}, codec ServerCodec, errmsg string) {
-	resp := server.getResponse()
-	// Encode the response header
-	resp.ServiceMethod = req.ServiceMethod
-	if errmsg != "" {
-		resp.Error = errmsg
-		reply = invalidRequest
+func (server *Server) sendResponse(sending *sync.Mutex, resp *Response, reply interface{}, codec ServerCodec) {
+	// write the Error string if we have one
+	if resp.callErr != nil {
+		resp.Error = resp.callErr.Error()
 	}
-	resp.ID = req.ID
+
 	sending.Lock()
 	err := codec.WriteResponse(resp, reply)
 	if debugLog && err != nil {
@@ -244,7 +242,7 @@ func (server *Server) sendResponse(sending *sync.Mutex, req *Request, reply inte
 	server.freeResponse(resp)
 }
 
-func (server *Server) getResponse() *Response {
+func (server *Server) getResponse(req *Request) *Response {
 	server.respLock.Lock()
 	resp := server.freeResp
 	if resp == nil {
@@ -253,6 +251,12 @@ func (server *Server) getResponse() *Response {
 		server.freeResp = resp.next
 		*resp = Response{}
 	}
+
+	// Encode the response header
+	resp.ServiceMethod = req.ServiceMethod
+	resp.ID = req.ID
+	resp.Header = Header{}
+
 	server.respLock.Unlock()
 	return resp
 }
@@ -260,7 +264,6 @@ func (server *Server) getResponse() *Response {
 func (server *Server) freeResponse(resp *Response) {
 	server.respLock.Lock()
 	resp.next = server.freeResp
-	resp.Header = Header{}
 	server.freeResp = resp
 	server.respLock.Unlock()
 }
@@ -299,16 +302,37 @@ func (s *service) call(ctx context.Context, server *Server, sending *sync.Mutex,
 	mtype.Unlock()
 	function := mtype.method.Func
 
-	// Invoke the method, providing a new value for the reply.
-	returnValues := function.Call([]reflect.Value{s.rcvr, reflect.ValueOf(ctx), argv, replyv})
+	resp := server.getResponse(req)
 
-	// The return value for the method is an error.
-	errInter := returnValues[0].Interface()
-	errmsg := ""
-	if errInter != nil {
-		errmsg = errInter.(error).Error()
+	sentResponse := false
+
+	// create our root handler
+	handler := func(ctx context.Context, rw ResponseWriter, req *Request) {
+		// Invoke the method, providing a new value for the reply.
+		returnValues := function.Call([]reflect.Value{s.rcvr, reflect.ValueOf(ctx), argv, replyv})
+
+		// The return value for the method is an error.
+		errInter := returnValues[0].Interface()
+		if errInter != nil {
+			resp.callErr = errInter.(error)
+		}
+
+		server.sendResponse(sending, resp, replyv.Interface(), codec)
+		sentResponse = true
 	}
 
-	server.sendResponse(sending, req, replyv.Interface(), codec, errmsg)
+	// do middleware stuff
+	for i := len(server.middlewares) - 1; i >= 0; i-- {
+		handler = server.middlewares[i].Middleware(handler)
+	}
+
+	handler(ctx, responseWriter{Response: resp}, req)
+
+	// we still want to send a response, regardless of middleware firing
+	if !sentResponse {
+		server.sendResponse(sending, resp, replyv.Interface(), codec)
+	}
+
+	// cleanup
 	server.freeRequest(req)
 }

@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/renevo/rpc"
 	"github.com/renevo/rpc/examples/helloworld"
@@ -20,6 +22,15 @@ func main() {
 		panic(err)
 	}
 	defer ln.Close()
+
+	srv.Use(func(next rpc.MiddlewareHandler) rpc.MiddlewareHandler {
+		return func(ctx context.Context, rw rpc.ResponseWriter, req *rpc.Request) {
+			start := time.Now()
+			fmt.Fprintf(os.Stdout, "Execute: %q\n", req.ServiceMethod)
+			next(ctx, rw, req)
+			fmt.Fprintf(os.Stdout, "Executed %q in %v\n", req.ServiceMethod, time.Since(start))
+		}
+	})
 
 	go func() {
 		srv.Accept(context.Background(), ln)

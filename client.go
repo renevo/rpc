@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"io"
 	"log"
+	"os"
 	"sync"
 )
 
@@ -93,6 +95,7 @@ func (client *Client) input() {
 		if err != nil {
 			break
 		}
+		fmt.Fprintf(os.Stdout, "%+v\n", response.Header)
 		requestID := response.ID
 		client.mutex.Lock()
 		call := client.pending[requestID]
