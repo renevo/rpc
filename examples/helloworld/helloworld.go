@@ -3,6 +3,7 @@ package helloworld
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/renevo/rpc"
 )
@@ -21,6 +22,8 @@ type Server struct {
 }
 
 func (s *Server) Hello(ctx context.Context, name string, msg *string) error {
+	fmt.Fprintf(os.Stdout, "Request ID: %q\n", rpc.ContextID(ctx))
+
 	*msg = fmt.Sprintf("Hello, %s!", name)
 	return nil
 }

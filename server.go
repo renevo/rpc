@@ -286,7 +286,9 @@ func (server *Server) freeRequest(req *Request) {
 }
 
 func (s *service) call(ctx context.Context, server *Server, sending *sync.Mutex, wg *sync.WaitGroup, mtype *methodType, req *Request, argv, replyv reflect.Value, codec ServerCodec) {
-	ctx = context.WithValue(ctx, contextRequestID, req.ID)
+	ctx = context.WithValue(ctx, contextID, req.ID)
+	ctx = context.WithValue(ctx, contextServiceMethod, req.ServiceMethod)
+	ctx = context.WithValue(ctx, contextHeader, req.Header)
 
 	if wg != nil {
 		defer wg.Done()
