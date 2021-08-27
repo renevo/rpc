@@ -1,6 +1,6 @@
 # RPC Package
 
-[![GoDoc](https://pkg.go.dev/badge/github.com/renevo/rpc)][API]
+[![Go Reference](https://pkg.go.dev/badge/github.com/renevo/rpc.svg)](https://pkg.go.dev/github.com/renevo/rpc)
 
 Based off of *copied from* the `net/rpc` package with the following changes:
 
