@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/renevo/rpc.svg)](https://pkg.go.dev/github.com/renevo/rpc)
 
-Based off of *copied from* the `net/rpc` package with the following changes:
+Based off of (*copied from*) the `net/rpc` package with the following changes:
 
 ```bash
 go get -u github.com/renevo/rpc
