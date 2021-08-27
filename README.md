@@ -15,7 +15,9 @@ The following features have been removed:
 
 * DialHTTP
 * ServeHTTP
+* HandleHTTP
 
+The HTTP functionality could be added to this relatively easily through server.ServeRequest
 
 ## Stability
 
