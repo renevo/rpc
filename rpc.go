@@ -15,7 +15,7 @@ type Request struct {
 // network traffic.
 type Response struct {
 	ServiceMethod string    // echoes that of the Request
-	ID            string    // echoes that of the request
+	ID            string    // echoes that of the Request
 	Header        Header    // Response Headers
 	Error         string    // error, if any.
 	callErr       error     // error that won't get sent across the wire
