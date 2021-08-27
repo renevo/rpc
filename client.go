@@ -18,6 +18,7 @@ func (e ServerError) Error() string {
 	return string(e)
 }
 
+// ErrShutdown is returned when the client has been closed and a call to Go or Call is executed.
 var ErrShutdown = errors.New("connection is shut down")
 
 // Client represents an RPC Client.
@@ -110,7 +111,7 @@ func (client *Client) Call(ctx context.Context, serviceMethod string, args inter
 	}
 }
 
-// send will execute the call over the wire and input will recieve/complete
+// send will execute the call over the wire and input will receive/complete
 func (client *Client) send(ctx context.Context, call *Call) {
 	client.reqMutex.Lock()
 	defer client.reqMutex.Unlock()
@@ -124,7 +125,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		return
 	}
 
-	requestID := pseudo_uuid()
+	requestID := pseudoUUID()
 	client.pending[requestID] = call
 	client.mutex.Unlock()
 

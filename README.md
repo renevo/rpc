@@ -1,6 +1,7 @@
 # RPC Package
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/renevo/rpc.svg)](https://pkg.go.dev/github.com/renevo/rpc)
+[![Go Report Card](https://goreportcard.com/badge/github.com/renevo/rpc)](https://goreportcard.com/report/github.com/renevo/rpc)
 
 Based off of (*copied from*) the `net/rpc` package with the following changes:
 

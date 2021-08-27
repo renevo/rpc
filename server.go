@@ -18,6 +18,7 @@ import (
 // contains an error when it is used.
 var invalidRequest = struct{}{}
 
+// Server represents an RPC Server.
 type Server struct {
 	serviceMap  sync.Map
 	reqLock     sync.Mutex // protects freeReq

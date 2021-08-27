@@ -6,7 +6,7 @@ import (
 )
 
 // Note - NOT RFC4122 compliant
-func pseudo_uuid() (uuid string) {
+func pseudoUUID() (uuid string) {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 
