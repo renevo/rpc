@@ -1,5 +1,4 @@
 package rpc
 
-// Not sure I want to keep this
-
-var debugLog = true
+// enable this for internal RPC errors that will not directly impact usage of this package
+var debugLog = false

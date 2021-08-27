@@ -67,6 +67,13 @@ func (server *Server) Accept(ctx context.Context, lis net.Listener) {
 			}
 			return
 		}
+
+		// attempt some optimizations for tcp
+		if tcp, ok := conn.(*net.TCPConn); ok {
+			_ = tcp.SetKeepAlive(true)
+			_ = tcp.SetNoDelay(true)
+		}
+
 		go server.ServeConn(ctx, conn)
 	}
 }

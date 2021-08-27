@@ -50,7 +50,11 @@ func Dial(ctx context.Context, network, address string) (*Client, error) {
 		return nil, err
 	}
 
-	// TODO: Add tcp optimizations here
+	// attempt some optimizations for tcp
+	if tcp, ok := conn.(*net.TCPConn); ok {
+		_ = tcp.SetKeepAlive(true)
+		_ = tcp.SetNoDelay(true)
+	}
 
 	return NewClient(conn), nil
 }
