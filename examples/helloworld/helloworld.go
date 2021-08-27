@@ -18,10 +18,9 @@ func (c *Client) Hello(ctx context.Context, name string) (string, error) {
 	return msg, err
 }
 
-type Server struct {
-}
+type Server int
 
-func (s *Server) Hello(ctx context.Context, name string, msg *string) error {
+func (Server) Hello(ctx context.Context, name string, msg *string) error {
 	fmt.Fprintf(os.Stdout, "Hello Request ID: %q\n", rpc.ContextID(ctx))
 
 	*msg = fmt.Sprintf("Hello, %s!", name)

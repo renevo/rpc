@@ -15,7 +15,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	defer client.Close()
 
 	hc := &helloworld.Client{Client: client}
@@ -23,7 +22,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	msg, err := hc.Hello(rpc.ContextWithHeaders(ctx, rpc.Header{}.Set("X-Client-Token", "abcdefg")), "World")
+	msg, err := hc.Hello(rpc.ContextWithHeaders(ctx, rpc.Header{}.Set("X-Client-Token", "MY-TOKEN-HERE")), "World")
 	if err != nil {
 		panic(err)
 	}

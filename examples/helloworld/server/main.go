@@ -15,7 +15,7 @@ import (
 
 func main() {
 	srv := rpc.NewServer()
-	srv.Register(&helloworld.Server{})
+	srv.Register(new(helloworld.Server))
 
 	ln, err := net.Listen("tcp", "0.0.0.0:2311")
 	if err != nil {

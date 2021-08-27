@@ -1,2 +1,124 @@
-// Package rpc is an RPC server and client framework
+/*
+	Package rpc provides access to the exported methods of an object across a
+	network or other I/O connection.  A server registers an object, making it visible
+	as a service with the name of the type of the object.  After registration, exported
+	methods of the object will be accessible remotely.  A server may register multiple
+	objects (services) of different types but it is an error to register multiple
+	objects of the same type.
+
+	Only methods that satisfy these criteria will be made available for remote access;
+	other methods will be ignored:
+
+		- the method's type is exported.
+		- the method is exported.
+		- the method has three arguments, all exported (or builtin) types.
+		- the method's first argument is a context.Context
+		- the method's third argument is a pointer.
+		- the method has return type error.
+
+	In effect, the method must look schematically like
+
+		func (t *T) MethodName(ctx context.Context, argType T1, replyType *T2) error
+
+	where T1 and T2 can be marshaled by encoding/gob.
+	These requirements apply even if a different codec is used.
+	(In the future, these requirements may soften for custom codecs.)
+
+	The method's second argument represents the arguments provided by the caller; the
+	third argument represents the result parameters to be returned to the caller.
+	The method's return value, if non-nil, is passed back as a string that the client
+	sees as if created by errors.New.  If an error is returned, the reply parameter
+	will not be sent back to the client.
+
+	The server may handle requests on a single connection by calling ServeConn.  More
+	typically it will create a network listener and call Accept.
+
+	A client wishing to use the service establishes a connection and then invokes
+	NewClient on the connection.  The convenience function Dial performs
+	both steps for a raw network connection.  The resulting
+	Client object has two methods, Call and Go, that specify the service and method to
+	call, a context, a pointer containing the arguments, and a pointer to receive the result
+	parameters.
+
+	The Call method waits for the remote call to complete or the context.Context to complete while the Go method
+	launches the call asynchronously and signals completion using the Call
+	structure's Done channel.
+
+	Unless an explicit codec is set up, package encoding/gob is used to
+	transport the data.
+
+	Here is a simple example.  A server wishes to export an object of type Arith:
+
+		package server
+
+		import "errors"
+
+		type Args struct {
+			A, B int
+		}
+
+		type Quotient struct {
+			Quo, Rem int
+		}
+
+		type Arith int
+
+		func (t *Arith) Multiply(ctx context.Context, args *Args, reply *int) error {
+			*reply = args.A * args.B
+			return nil
+		}
+
+		func (t *Arith) Divide(ctx context.Context, args *Args, quo *Quotient) error {
+			if args.B == 0 {
+				return errors.New("divide by zero")
+			}
+			quo.Quo = args.A / args.B
+			quo.Rem = args.A % args.B
+			return nil
+		}
+
+	The server calls (for HTTP service):
+
+		arith := new(Arith)
+		rpc.Register(arith)
+
+		l, e := net.Listen("tcp", ":1234")
+		if e != nil {
+			log.Fatal("listen error:", e)
+		}
+		go rpc.Accept(context.Background(), l)
+
+	At this point, clients can see a service "Arith" with methods "Arith.Multiply" and
+	"Arith.Divide".  To invoke one, a client first dials the server:
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		client, err := rpc.Dial(ctx, "tcp", serverAddress + ":1234")
+
+		if err != nil {
+			log.Fatal("dialing:", err)
+		}
+
+	Then it can make a remote call:
+
+		// Synchronous call
+		args := &server.Args{7,8}
+		var reply int
+		err = client.Call(ctx, "Arith.Multiply", args, &reply)
+		if err != nil {
+			log.Fatal("arith error:", err)
+		}
+		fmt.Printf("Arith: %d*%d=%d", args.A, args.B, reply)
+
+	or
+
+		// Asynchronous call
+		quotient := new(Quotient)
+		divCall := client.Go(ctx, "Arith.Divide", args, quotient, nil)
+		replyCall := <-divCall.Done	// will be equal to divCall
+		// check errors, print, etc.
+
+	A server implementation will often provide a simple, type-safe wrapper for the
+	client.
+
+*/
 package rpc
