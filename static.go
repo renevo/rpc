@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"time"
 )
 
 // DefaultServer is the default instance of *Server.
@@ -15,14 +16,14 @@ var DefaultServer = NewServer()
 // ServeConn uses the gob wire format (see package gob) on the
 // connection. To use an alternate codec, use ServeCodec.
 // See NewClient's comment for information about concurrent access.
-func ServeConn(conn io.ReadWriteCloser) {
-	DefaultServer.ServeConn(conn)
+func ServeConn(ctx context.Context, conn io.ReadWriteCloser) {
+	DefaultServer.ServeConn(ctx, conn)
 }
 
 // ServeCodec is like ServeConn but uses the specified codec to
 // decode requests and encode responses.
-func ServeCodec(codec ServerCodec) {
-	DefaultServer.ServeCodec(codec)
+func ServeCodec(ctx context.Context, codec ServerCodec) {
+	DefaultServer.ServeCodec(ctx, codec)
 }
 
 // ServeRequest is like ServeCodec but synchronously serves a single request.
@@ -34,4 +35,22 @@ func ServeRequest(ctx context.Context, codec ServerCodec) error {
 // Accept accepts connections on the listener and serves requests
 // to DefaultServer for each incoming connection.
 // Accept blocks; the caller typically invokes it in a go statement.
-func Accept(lis net.Listener) { DefaultServer.Accept(lis) }
+func Accept(ctx context.Context, lis net.Listener) {
+	DefaultServer.Accept(ctx, lis)
+}
+
+// Dial connects to an RPC server at the specified network address.
+func Dial(ctx context.Context, network, address string) (*Client, error) {
+	dialer := &net.Dialer{
+		Timeout:   10 * time.Second,
+		KeepAlive: 10 * time.Second,
+	}
+	conn, err := dialer.DialContext(ctx, network, address)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Add tcp optimizations here
+
+	return NewClient(conn), nil
+}

@@ -1,7 +1,5 @@
 package rpc
 
-import "context"
-
 // A ServerCodec implements reading of RPC requests and writing of
 // RPC responses for the server side of an RPC session.
 // The server calls ReadRequestHeader and ReadRequestBody in pairs
@@ -10,9 +8,9 @@ import "context"
 // connection. ReadRequestBody may be called with a nil
 // argument to force the body of the request to be read and discarded.
 type ServerCodec interface {
-	ReadRequestHeader(context.Context, *Request) error
-	ReadRequestBody(context.Context, interface{}) error
-	WriteResponse(context.Context, *Response, interface{}) error
+	ReadRequestHeader(*Request) error
+	ReadRequestBody(interface{}) error
+	WriteResponse(*Response, interface{}) error
 
 	// Close can be called multiple times and must be idempotent.
 	Close() error
@@ -27,9 +25,9 @@ type ServerCodec interface {
 // argument to force the body of the response to be read and then
 // discarded.
 type ClientCodec interface {
-	WriteRequest(context.Context, *Request, interface{}) error
-	ReadResponseHeader(context.Context, *Response) error
-	ReadResponseBody(context.Context, interface{}) error
+	WriteRequest(*Request, interface{}) error
+	ReadResponseHeader(*Response) error
+	ReadResponseBody(interface{}) error
 
 	// Close can be called multiple times and must be idempotent.
 	Close() error
