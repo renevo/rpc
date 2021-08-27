@@ -4,6 +4,10 @@
 
 Based off of *copied from* the `net/rpc` package with the following changes:
 
+```bash
+go get -u github.com/renevo/rpc
+```
+
 * Server and Client `context.Context` implementations.
 * Header support
   * Client Header Injection
