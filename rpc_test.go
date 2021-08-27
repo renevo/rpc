@@ -17,7 +17,10 @@ func (testRPC) Test(ctx context.Context, in string, out *string) error {
 // TestRPC is a super simple functional test of calling over TCP
 func TestRPC(t *testing.T) {
 	srv := NewServer()
-	srv.RegisterName("Test", new(testRPC))
+	if err := srv.RegisterName("Test", new(testRPC)); err != nil {
+		t.Fatalf("failed to register service: %v", err)
+		return
+	}
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
