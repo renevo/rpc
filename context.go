@@ -39,3 +39,8 @@ func ContextServiceMethod(ctx context.Context) string {
 
 	return ""
 }
+
+// ContextWithHeaders will set the current headers for a client context. This has no effect on a server.
+func ContextWithHeaders(ctx context.Context, h Header) context.Context {
+	return context.WithValue(ctx, contextHeader, h)
+}

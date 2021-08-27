@@ -67,9 +67,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	// Encode and send the request.
 	client.request.ID = requestID
 	client.request.ServiceMethod = call.ServiceMethod
-	client.request.Header = Header{}
-
-	// TODO: Client Middleware
+	client.request.Header = ContextHeader(ctx)
 
 	// Execute the request
 	err := client.codec.WriteRequest(&client.request, call.Args)

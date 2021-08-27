@@ -12,8 +12,9 @@ type Header map[string][]string
 // It appends to any existing values associated with key.
 // The key is case insensitive; it is canonicalized by
 // CanonicalHeaderKey.
-func (h Header) Add(key, value string) {
+func (h Header) Add(key, value string) Header {
 	textproto.MIMEHeader(h).Add(key, value)
+	return h
 }
 
 // Set sets the header entries associated with key to the
@@ -21,8 +22,9 @@ func (h Header) Add(key, value string) {
 // associated with key. The key is case insensitive; it is
 // canonicalized by textproto.CanonicalMIMEHeaderKey.
 // To use non-canonical keys, assign to the map directly.
-func (h Header) Set(key, value string) {
+func (h Header) Set(key, value string) Header {
 	textproto.MIMEHeader(h).Set(key, value)
+	return h
 }
 
 // Get gets the first value associated with the given key. If

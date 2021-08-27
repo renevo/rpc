@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/renevo/rpc"
 	"github.com/renevo/rpc/examples/helloworld"
@@ -18,7 +19,11 @@ func main() {
 	defer client.Close()
 
 	hc := &helloworld.Client{Client: client}
-	msg, err := hc.Hello(context.Background(), "World")
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	msg, err := hc.Hello(rpc.ContextWithHeaders(ctx, rpc.Header{}.Set("X-Client-Token", "abcdefg")), "World")
 	if err != nil {
 		panic(err)
 	}

@@ -27,6 +27,7 @@ func main() {
 		return func(ctx context.Context, rw rpc.ResponseWriter, req *rpc.Request) {
 			start := time.Now()
 			fmt.Fprintf(os.Stdout, "Execute: %q\n", req.ServiceMethod)
+			fmt.Fprintf(os.Stdout, "Client Token: %q\n", req.Header.Get("X-Client-Token"))
 			next(ctx, rw, req)
 			fmt.Fprintf(os.Stdout, "Executed %q in %v\n", req.ServiceMethod, time.Since(start))
 		}
